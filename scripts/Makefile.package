@@ -24,8 +24,10 @@ include $(srctree)/scripts/Kbuild.include
 # but the binrpm-pkg target can; for some reason O= gets ignored.
 
 # Remove hyphens since they have special meaning in RPM filenames
-KERNELPATH := kernel-$(subst -,_,$(KERNELRELEASE))
-KDEB_SOURCENAME ?= linux-$(KERNELRELEASE)
+KERNELRELEASELC = $(shell echo $(KERNELRELEASE) | tr '[:upper:]' '[:lower:]')
+
+KERNELPATH := kernel-$(subst -,_,$(KERNELRELEASELC))
+KDEB_SOURCENAME ?= linux-$(KERNELRELEASELC)
 KBUILD_PKG_ROOTCMD ?="fakeroot -u"
 export KDEB_SOURCENAME
 # Include only those top-level files that are needed by make, plus the GPL copy
