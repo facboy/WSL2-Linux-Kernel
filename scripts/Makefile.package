@@ -26,6 +26,13 @@ include $(srctree)/scripts/Kbuild.include
 # Remove hyphens since they have special meaning in RPM filenames
 KERNELPATH := kernel-$(subst -,_,$(KERNELRELEASE))
 KDEB_SOURCENAME ?= linux-upstream
+
+# My fixes for kernel name below (these were for 5.10.y originally)
+#KERNELRELEASELC = $(shell echo $(KERNELRELEASE) | tr '[:upper:]' '[:lower:]')
+#
+#KERNELPATH := kernel-$(subst -,_,$(KERNELRELEASELC))
+#KDEB_SOURCENAME ?= linux-$(KERNELRELEASELC)
+
 KBUILD_PKG_ROOTCMD ?="fakeroot -u"
 export KDEB_SOURCENAME
 # Include only those top-level files that are needed by make, plus the GPL copy
