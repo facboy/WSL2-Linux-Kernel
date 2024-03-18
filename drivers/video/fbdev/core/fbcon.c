@@ -823,7 +823,7 @@ static int set_con2fb_map(int unit, int newidx, int user)
 	int oldidx = con2fb_map[unit];
 	struct fb_info *info = fbcon_registered_fb[newidx];
 	struct fb_info *oldinfo = NULL;
-	int found, err = 0, show_logo;
+	int err = 0, show_logo;
 
 	WARN_CONSOLE_UNLOCKED();
 
@@ -841,26 +841,26 @@ static int set_con2fb_map(int unit, int newidx, int user)
 	if (oldidx != -1)
 		oldinfo = fbcon_registered_fb[oldidx];
 
-	found = search_fb_in_map(newidx);
-
-	if (!err && !found) {
+	if (!search_fb_in_map(newidx)) {
 		err = con2fb_acquire_newinfo(vc, info, unit);
-		if (!err)
-			con2fb_map[unit] = newidx;
+		if (err)
+			return err;
+
+		fbcon_add_cursor_work(info);
 	}
+
+	con2fb_map[unit] = newidx;
 
 	/*
 	 * If old fb is not mapped to any of the consoles,
 	 * fbcon should release it.
 	 */
-	if (!err && oldinfo && !search_fb_in_map(oldidx))
+	if (oldinfo && !search_fb_in_map(oldidx))
 		con2fb_release_oldinfo(vc, oldinfo, info);
 
 	show_logo = (fg_console == 0 && !user &&
 			 logo_shown != FBCON_LOGO_DONTSHOW);
 
-	if (!found)
-		fbcon_add_cursor_work(info);
 	con2fb_map_boot[unit] = newidx;
 	con2fb_init_display(vc, info, unit, show_logo);
 
@@ -2397,11 +2397,9 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h, int charcount,
 	struct fbcon_ops *ops = info->fbcon_par;
 	struct fbcon_display *p = &fb_display[vc->vc_num];
 	int resize, ret, old_userfont, old_width, old_height, old_charcount;
-	char *old_data = NULL;
+	u8 *old_data = vc->vc_font.data;
 
 	resize = (w != vc->vc_font.width) || (h != vc->vc_font.height);
-	if (p->userfont)
-		old_data = vc->vc_font.data;
 	vc->vc_font.data = (void *)(p->fontdata = data);
 	old_userfont = p->userfont;
 	if ((p->userfont = userfont))
@@ -2435,13 +2433,13 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h, int charcount,
 		update_screen(vc);
 	}
 
-	if (old_data && (--REFCOUNT(old_data) == 0))
+	if (old_userfont && (--REFCOUNT(old_data) == 0))
 		kfree(old_data - FONT_EXTRA_WORDS * sizeof(int));
 	return 0;
 
 err_out:
 	p->fontdata = old_data;
-	vc->vc_font.data = (void *)old_data;
+	vc->vc_font.data = old_data;
 
 	if (userfont) {
 		p->userfont = old_userfont;
