@@ -8,26 +8,34 @@ fi
 
 set -e
 
-MINE_BRANCH="mine"
-MINE_BASE="mine-base"
-UPSTREAM_BRANCH="linux-msft-wsl-5.15.y"
-UPSTREAM="upstream/${UPSTREAM_BRANCH}"
+MINE_BRANCH="mine-6.1"
+MINE_BASE="mine-6.1-base"
+UPSTREAM_BRANCH="linux-6.1.y"
+UPSTREAM="linux-stable/${UPSTREAM_BRANCH}"
+MY_UPSTREAM_BRANCH="linux-mine-wsl-6.1.y"
 
 if [[ "$(git branch --show-current)" != "${MINE_BRANCH}" ]]; then
 	>&2 echo "Not on ${MINE_BRANCH} branch"
 	exit 1
 fi
 
-git fetch upstream --prune
+git fetch linux-stable --prune
 
-merge_base="$(git merge-base "${MINE_BRANCH}" "${UPSTREAM}")"
-upstream_commit="$(git rev-parse "${UPSTREAM}")"
+# check out my upstream branch and merge upstream
+git co "${MY_UPSTREAM_BRANCH}"
+git merge "${UPSTREAM}"
+
+git co "${MINE_BRANCH}"
+
+merge_base="$(git merge-base "${MINE_BRANCH}" "${MY_UPSTREAM_BRANCH}")"
+upstream_commit="$(git rev-parse "${MY_UPSTREAM_BRANCH}")"
 
 if [[ "${merge_base}" != "${upstream_commit}" ]]; then
-	git rebase --onto "${UPSTREAM}" "${MINE_BASE}"
+	git rebase --onto "${MY_UPSTREAM_BRANCH}" "${MINE_BASE}"
 fi
 
-git fetch upstream "${UPSTREAM_BRANCH}:${MINE_BASE}"
-git fetch upstream "${UPSTREAM_BRANCH}:${UPSTREAM_BRANCH}"
+git branch -cf "${MY_UPSTREAM_BRANCH}" "${MINE_BASE}"
+git branch --no-track -f "${UPSTREAM_BRANCH}" "${UPSTREAM}"
 # git push origin "${MINE_BRANCH}" # needs --force
+git push origin "${MY_UPSTREAM_BRANCH}"
 git push origin "${UPSTREAM_BRANCH}"
