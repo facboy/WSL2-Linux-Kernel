@@ -12,6 +12,8 @@ MINE_BRANCH="mine-6.6"
 MINE_BASE="mine-6.6-base"
 UPSTREAM_BRANCH="linux-msft-wsl-6.6.y"
 UPSTREAM="upstream/${UPSTREAM_BRANCH}"
+MAIN_BRANCH="linux-6.6.y"
+MAIN="linux-stable/${MAIN_BRANCH}"
 MY_UPSTREAM_BRANCH="linux-mine-wsl-6.6.y"
 
 if [[ "$(git branch --show-current)" != "${MINE_BRANCH}" ]]; then
@@ -21,9 +23,10 @@ fi
 
 git fetch upstream --prune
 
-# check out my upstream branch and merge upstream
+# check out my upstream branch and merge upstream and main
 git co "${MY_UPSTREAM_BRANCH}"
 git merge "${UPSTREAM}"
+git merge "${MAIN}"
 
 git co "${MINE_BRANCH}"
 
