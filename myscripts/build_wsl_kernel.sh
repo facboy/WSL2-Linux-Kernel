@@ -13,6 +13,13 @@ WSL2_DIR="/mnt/f/wsl/kernel/"
 echo "Building kernel"
 make KCONFIG_CONFIG=Microsoft/config-wsl deb-pkg
 
+echo "Building modules vhdx"
+./Microsoft/scripts/gen_modules_vhdx.sh "$PWD/modules" modules.vhdx
+
+echo "Cleaning build artifacts"
+make clean
+rm -r "$PWD/modules"
+
 # work out kernel version
 KERNEL_VER="$(ls -1tr ../linux-upstream_*.buildinfo | tail -n1 | gawk -- 'BEGIN { regex="^.*linux-upstream_([0-9.]+)-.*$" } $0 ~ regex { ver = gensub(regex, "\\1", 1); print ver }')"
 
